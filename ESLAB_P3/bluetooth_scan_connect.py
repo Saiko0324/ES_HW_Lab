@@ -10,7 +10,7 @@ from bleak.exc import BleakError
 # Example UUIDs (replace with your actual service/characteristic UUIDs)
 # These often look like: "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 TARGET_SERVICE_UUID = "0000fff0-0000-1000-8000-00805f9b34fb" # Example: HM-10 service
-TARGET_CHAR_UUID_INDICATE = "0000fff1-0000-1000-8000-00805f9b34fb" # Example: A characteristic supporting indications
+TARGET_CHAR_UUID_INDICATE = "0000fff2-0000-1000-8000-00805f9b34fb" # Example: A characteristic supporting indications
 
 # Standard UUID for the Client Characteristic Configuration Descriptor (CCCD)
 CCCD_UUID = "00002904-0000-1000-8000-00805f9b34fb"
@@ -133,9 +133,8 @@ async def connect_and_interact(device_info):
                     await client.start_notify(target_char.uuid, indication_handler)
                     print("Indications enabled. Waiting for data...")
 
-                    # Keep the connection alive for a while to receive indications
-                    # In a real app, you'd have a more robust way to handle the connection lifetime
-                    await asyncio.sleep(30) # Wait for 30 seconds
+                    # Keep the connection alive for a while to receive indication
+                    await asyncio.sleep(180) # Wait for 180 seconds
 
                     print("\nStopping indications...")
                     await client.stop_notify(target_char.uuid)
