@@ -1,0 +1,9 @@
+../Drivers/BSP/B-L475E-IOT01A1/b_l475e_iot01a1_bus.c:89:9:BSP_SPI3_Init	5
+../Drivers/BSP/B-L475E-IOT01A1/b_l475e_iot01a1_bus.c:130:9:BSP_SPI3_DeInit	4
+../Drivers/BSP/B-L475E-IOT01A1/b_l475e_iot01a1_bus.c:156:9:BSP_SPI3_Send	2
+../Drivers/BSP/B-L475E-IOT01A1/b_l475e_iot01a1_bus.c:173:10:BSP_SPI3_Recv	2
+../Drivers/BSP/B-L475E-IOT01A1/b_l475e_iot01a1_bus.c:190:9:BSP_SPI3_SendRecv	2
+../Drivers/BSP/B-L475E-IOT01A1/b_l475e_iot01a1_bus.c:259:9:BSP_GetTick	1
+../Drivers/BSP/B-L475E-IOT01A1/b_l475e_iot01a1_bus.c:265:26:MX_SPI3_Init	2
+../Drivers/BSP/B-L475E-IOT01A1/b_l475e_iot01a1_bus.c:291:13:SPI3_MspInit	1
+../Drivers/BSP/B-L475E-IOT01A1/b_l475e_iot01a1_bus.c:332:13:SPI3_MspDeInit	1

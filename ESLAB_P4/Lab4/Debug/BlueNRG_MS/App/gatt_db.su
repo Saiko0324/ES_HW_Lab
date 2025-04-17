@@ -1,0 +1,8 @@
+../BlueNRG_MS/App/gatt_db.c:91:12:Add_Accel_Service	64	static
+../BlueNRG_MS/App/gatt_db.c:145:12:Accel_Update	32	static
+../BlueNRG_MS/App/gatt_db.c:172:12:Add_HWServW2ST_Service	64	static
+../BlueNRG_MS/App/gatt_db.c:219:12:Add_SWServW2ST_Service	64	static
+../BlueNRG_MS/App/gatt_db.c:258:12:Acc_Update	56	static
+../BlueNRG_MS/App/gatt_db.c:293:6:Read_Request_CB	88	static
+../BlueNRG_MS/App/gatt_db.c:326:6:Write_Request_CB	32	static
+../BlueNRG_MS/App/gatt_db.c:346:12:BlueMS_Environmental_Update	40	static
