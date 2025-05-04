@@ -170,49 +170,33 @@ void ADC1_Init(void)
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) // DMA interrupt handler function
 {
-
-	int i;
-
-	for(i = SAMPLE_BUFFER_SIZE/2; i < SAMPLE_BUFFER_SIZE; i++){
-		printf("#%d ", sample_buffer[i]);
-	}
-	printf("\n");
     // Process second half of buffer (sample_buffer[128] to [255])
     // Send a marker value to indicate bottom half start
 
-//    osStatus status = osMessagePut(dmaQueueHandle, 0xB000, 0); // 'B' for Bottom half marker
-//    if (status != osOK) {
-//        printf("Failed to put test message: %d\r\n", status);
-//    } else {
-//        printf("Test message put successfully\r\n");
-//    }
+	int i;
+    osStatus status = osMessagePut(dmaQueueHandle, 0xB000, 0); // 'B' for Bottom half marker
+    if (status != osOK) {
+        printf("Failed to put test message: %d\r\n", status);
+    }
 
-    for (int i = SAMPLE_BUFFER_SIZE/2; i < SAMPLE_BUFFER_SIZE; i++) {
+    for (i = SAMPLE_BUFFER_SIZE/2; i < SAMPLE_BUFFER_SIZE; i++) {
         // Put each sample into the queue
         osMessagePut(dmaQueueHandle, (uint32_t)sample_buffer[i], 0);
-        printf("%d ", sample_buffer[i]);
     }
 }
 
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef *hadc)
 {
+//    Process first half of buffer (sample_buffer[0] to [127])
+//    Send a marker value to indicate top half start
+
 	int i;
-
-	for(i = 0; i < SAMPLE_BUFFER_SIZE / 2; i++){
-		printf("#%d ", sample_buffer[i]);
+    osStatus status = osMessagePut(dmaQueueHandle, 0xA000, 0); // 'A' for Top half marker
+	if (status != osOK) {
+		printf("Failed to put test message: %d\r\n", status);
 	}
-	printf("\n");
-    // Process first half of buffer (sample_buffer[0] to [127])
-    // Send a marker value to indicate top half start
 
-//    osStatus status = osMessagePut(dmaQueueHandle, 0xA000, 0); // 'A' for Top half marker
-//        if (status != osOK) {
-//            printf("Failed to put test message: %d\r\n", status);
-//        } else {
-//            printf("Test message put successfully\r\n");
-//        }
-
-    for (int i = 0; i < SAMPLE_BUFFER_SIZE/2; i++) {
+    for (i = 0; i < SAMPLE_BUFFER_SIZE/2; i++) {
         // Put each sample into the queue
         osMessagePut(dmaQueueHandle, (uint32_t)sample_buffer[i], 0);
     }
@@ -235,7 +219,7 @@ void ADC1_DMA1CH1_init()
     hdma1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
     hdma1.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
     hdma1.Init.Mode = DMA_CIRCULAR;
-    hdma1.Init.Priority = DMA_PRIORITY_HIGH;
+    hdma1.Init.Priority = DMA_PRIORITY_LOW; // modified
 
     if (HAL_DMA_Init(&hdma1) != HAL_OK)
     {
@@ -247,7 +231,7 @@ void ADC1_DMA1CH1_init()
     ADC1_Init();
 
     NVIC_SetVector(DMA1_Channel1_IRQn, (uint32_t)&DMA1_Channel1_IRQHandler);
-    HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+    HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 6, 0); // modified
     HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 }
 
@@ -276,9 +260,9 @@ static void TIM1_Init(void)
     TIM_MasterConfigTypeDef sMasterConfig = {0};
 
     htim1.Instance = TIM1;
-    htim1.Init.Prescaler = 400 - 1;
+    htim1.Init.Prescaler = 999;
     htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-    htim1.Init.Period = 1000 - 1;
+    htim1.Init.Period = 999;
     htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
     if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
@@ -337,7 +321,7 @@ int main(void)
   MX_USART3_UART_Init();
   MX_USB_OTG_FS_PCD_Init();
   /* USER CODE BEGIN 2 */
-  printf("hello\n");
+
   TIM1_Init();
   ADC1_DMA1CH1_init();
 
@@ -362,6 +346,7 @@ int main(void)
   /* definition and creation of dmaQueue */
   osMessageQDef(dmaQueue, 512, uint16_t);
   dmaQueueHandle = osMessageCreate(osMessageQ(dmaQueue), NULL);
+  printf("Initialized queue.\n");
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -373,7 +358,7 @@ int main(void)
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of TaskPrint */
-  osThreadDef(TaskPrint, StartTaskPrint, osPriorityHigh, 0, 512);
+  osThreadDef(TaskPrint, StartTaskPrint, osPriorityHigh, 0, 128);
   TaskPrintHandle = osThreadCreate(osThread(TaskPrint), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -928,10 +913,13 @@ void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
+
+    /* Infinite loop */
+    for(;;)
+    {
+//      printf("Default\n");
+      osDelay(1000);
+    }
   /* USER CODE END 5 */
 }
 
@@ -945,33 +933,30 @@ void StartDefaultTask(void const * argument)
 void StartTaskPrint(void const * argument)
 {
     /* USER CODE BEGIN StartTaskPrint */
-    osEvent event;
-    uint16_t receivedAdcValue;
-    printf("asd1\n");
-    /* Infinite loop */
-    for(;;)
-    {
-    	printf("asd\n");
-        // Wait indefinitely until a message is received from the dmaQueueHandle
-        event = osMessageGet(dmaQueueHandle, osWaitForever);
-        printf("got message\n");
-        if (event.status == osEventMessage)
-        {
-            receivedAdcValue = (uint16_t)event.value.v;
-            printf("got message2\n");
-            // Check if this is a marker value
-            if (receivedAdcValue == 0xA000) {
-                printf("\r\n----- BUFFER TOP HALF -----\r\n");
-            }
-            else if (receivedAdcValue == 0xB000) {
-                printf("\r\n----- BUFFER BOTTOM HALF -----\r\n");
-            }
-            else {
-                // Regular ADC value, print with buffer half indicator
-                printf("Temp Sensor ADC : %d\r\n", receivedAdcValue);
-            }
-        }
-    }
+	  /* Infinite loop */
+	    osEvent event;
+	    uint16_t receivedAdcValue;
+
+	    /* Infinite loop */
+	    for(;;)
+	    {
+	        event = osMessageGet(dmaQueueHandle, osWaitForever);
+	        if (event.status == osEventMessage)
+	        {
+	            receivedAdcValue = (uint16_t)event.value.v;
+	            // Check if this is a marker value
+	            if (receivedAdcValue == 0xA000) {
+	                printf("\r\n----- BUFFER TOP HALF -----\r\n");
+	            }
+	            else if (receivedAdcValue == 0xB000) {
+	                printf("\r\n----- BUFFER BOTTOM HALF -----\r\n");
+	            }
+	            else {
+	                // Regular ADC value, print with buffer half indicator
+	                printf("%d ", receivedAdcValue);
+	            }
+	        }
+	    }
     /* USER CODE END StartTaskPrint */
 }
 
